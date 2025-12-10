@@ -16,6 +16,6 @@ export interface CreateTaskInput {
 
 export interface UpdateTaskInput {
   title?: string;
-  description?: string;
+  description?: string | null;
   completed?: boolean;
 }

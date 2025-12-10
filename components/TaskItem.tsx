@@ -5,7 +5,7 @@ import { Task } from '@/lib/types';
 
 interface TaskItemProps {
   task: Task;
-  onUpdate: (id: string, updates: { title?: string; description?: string; completed?: boolean }) => Promise<void>;
+  onUpdate: (id: string, updates: { title?: string; description?: string | null; completed?: boolean }) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
 }
 
