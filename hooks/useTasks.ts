@@ -2,7 +2,6 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
 import { Task, CreateTaskInput, UpdateTaskInput } from '@/lib/types';
 
 export function useTasks(userIdentifier: string | null) {
@@ -21,15 +20,20 @@ export function useTasks(userIdentifier: string | null) {
       setIsLoading(true);
       setError(null);
 
-      const { data, error: fetchError } = await supabase
-        .from('tasks')
-        .select('*')
-        .eq('user_identifier', userIdentifier)
-        .order('created_at', { ascending: false });
+      const response = await fetch(`/api/tasks?user_identifier=${encodeURIComponent(userIdentifier)}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
-      if (fetchError) throw fetchError;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch tasks');
+      }
 
-      setTasks(data || []);
+      const { tasks: fetchedTasks } = await response.json();
+      setTasks(fetchedTasks || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch tasks');
       console.error('Error fetching tasks:', err);
@@ -48,22 +52,33 @@ export function useTasks(userIdentifier: string | null) {
     }
 
     try {
-      const { data, error: createError } = await supabase
-        .from('tasks')
-        .insert([
-          {
-            user_identifier: userIdentifier,
-            title: input.title,
-            description: input.description || null,
-          },
-        ])
-        .select()
-        .single();
+      // Call the enhancement endpoint which creates and stores the enhanced task
+      const response = await fetch('https://finangraphy.app.n8n.cloud/webhook/webhook/enhance-task', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_identifier: userIdentifier,
+          title: input.title,
+          description: input.description || '',
+        }),
+      });
 
-      if (createError) throw createError;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create and enhance task');
+      }
 
-      setTasks((prev) => [data, ...prev]);
-      return data;
+      const { task, success, enhanced } = await response.json();
+
+      if (!success) {
+        throw new Error('Failed to create task');
+      }
+
+      // Update local state with the enhanced task
+      setTasks((prev) => [task, ...prev]);
+      return task;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to create task';
       setError(errorMessage);
@@ -73,19 +88,25 @@ export function useTasks(userIdentifier: string | null) {
 
   const updateTask = async (id: string, updates: UpdateTaskInput) => {
     try {
-      const { data, error: updateError } = await supabase
-        .from('tasks')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
+      const response = await fetch(`/api/tasks/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updates),
+      });
 
-      if (updateError) throw updateError;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update task');
+      }
+
+      const { task } = await response.json();
 
       setTasks((prev) =>
-        prev.map((task) => (task.id === id ? data : task))
+        prev.map((t) => (t.id === id ? task : t))
       );
-      return data;
+      return task;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to update task';
       setError(errorMessage);
@@ -95,12 +116,17 @@ export function useTasks(userIdentifier: string | null) {
 
   const deleteTask = async (id: string) => {
     try {
-      const { error: deleteError } = await supabase
-        .from('tasks')
-        .delete()
-        .eq('id', id);
+      const response = await fetch(`/api/tasks/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
-      if (deleteError) throw deleteError;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete task');
+      }
 
       setTasks((prev) => prev.filter((task) => task.id !== id));
     } catch (err) {
