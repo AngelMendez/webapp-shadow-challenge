@@ -44,7 +44,7 @@ export default function Home() {
                 AI-Enhanced To-Do List
               </h1>
               <p className="text-sm text-gray-600 mt-1">
-                Welcome, {userIdentifier}
+                Welcome, {userIdentifier}!
               </p>
             </div>
             <button
