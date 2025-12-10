@@ -52,6 +52,8 @@ export default function Chatbot({ userIdentifier }: ChatbotProps) {
     setIsLoading(true);
 
     try {
+      console.log('Sending chatbot message:', userMessage.text);
+
       // Use our local API proxy to avoid CORS issues
       const response = await fetch('/api/chatbot', {
         method: 'POST',
@@ -64,11 +66,16 @@ export default function Chatbot({ userIdentifier }: ChatbotProps) {
         }),
       });
 
+      console.log('Chatbot response status:', response.status);
+
       if (!response.ok) {
-        throw new Error('Failed to send message');
+        const errorData = await response.json().catch(() => null);
+        console.error('Chatbot error response:', errorData);
+        throw new Error(errorData?.message || 'Failed to send message');
       }
 
       const data = await response.json();
+      console.log('Chatbot response data:', data);
 
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
