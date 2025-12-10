@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { Task } from '@/lib/types';
 
 interface Message {
   id: string;
@@ -11,13 +12,14 @@ interface Message {
 
 interface ChatbotProps {
   userIdentifier: string;
+  tasks: Task[];
 }
 
-export default function Chatbot({ userIdentifier }: ChatbotProps) {
+export default function Chatbot({ userIdentifier, tasks }: ChatbotProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: "Hi! I'm your AI assistant. I can help you manage tasks. Try saying 'Add task: Buy groceries' or 'List my tasks'",
+      text: "Hi! I'm your AI assistant. I can help you manage tasks.\n\nTry:\n• 'Add task: Buy groceries'\n• 'List my tasks'\n• 'Complete task #1' or 'Complete task 1'\n• 'Delete #2'\n\nYou can reference tasks using their number from the task list!",
       sender: 'bot',
       timestamp: new Date(),
     },
@@ -34,6 +36,38 @@ export default function Chatbot({ userIdentifier }: ChatbotProps) {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Helper function to resolve task numbers to IDs
+  const resolveTaskReferences = (message: string): string => {
+    // Sort tasks by completion status (incomplete first, then completed)
+    const sortedTasks = [...tasks].sort((a, b) => {
+      if (a.completed === b.completed) return 0;
+      return a.completed ? 1 : -1;
+    });
+
+    // Match patterns like "#1", "task 1", "task #1", "number 1", etc.
+    const taskNumberPattern = /#?(\d+)|task\s+#?(\d+)|number\s+#?(\d+)/gi;
+
+    let processedMessage = message;
+    const matches = Array.from(message.matchAll(taskNumberPattern));
+
+    // Process matches in reverse order to avoid offset issues
+    for (let i = matches.length - 1; i >= 0; i--) {
+      const match = matches[i];
+      const taskNumber = parseInt(match[1] || match[2] || match[3]);
+
+      if (taskNumber > 0 && taskNumber <= sortedTasks.length) {
+        const task = sortedTasks[taskNumber - 1];
+        // Replace the task number reference with the task ID
+        processedMessage =
+          processedMessage.slice(0, match.index) +
+          `task ID ${task.id}` +
+          processedMessage.slice(match.index! + match[0].length);
+      }
+    }
+
+    return processedMessage;
+  };
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,7 +86,11 @@ export default function Chatbot({ userIdentifier }: ChatbotProps) {
     setIsLoading(true);
 
     try {
-      console.log('Sending chatbot message:', userMessage.text);
+      // Resolve task number references to task IDs
+      const processedMessage = resolveTaskReferences(userMessage.text);
+
+      console.log('Original message:', userMessage.text);
+      console.log('Processed message:', processedMessage);
 
       // Use our local API proxy to avoid CORS issues
       const response = await fetch('/api/chatbot', {
@@ -62,7 +100,7 @@ export default function Chatbot({ userIdentifier }: ChatbotProps) {
         },
         body: JSON.stringify({
           user_identifier: userIdentifier,
-          message: userMessage.text,
+          message: processedMessage,
         }),
       });
 
@@ -256,7 +294,7 @@ export default function Chatbot({ userIdentifier }: ChatbotProps) {
           </button>
         </div>
         <p className="text-xs text-gray-500 mt-2">
-          Try: "Add task: [description]" or "List my tasks"
+          Try: "Complete #1" or "Delete task 2"
         </p>
       </form>
     </div>

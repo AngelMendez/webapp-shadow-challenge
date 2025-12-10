@@ -54,10 +54,11 @@ export default function TaskList({ tasks, onUpdate, onDelete, isLoading }: TaskL
             Active Tasks ({incompleteTasks.length})
           </h2>
           <div className="space-y-3">
-            {incompleteTasks.map((task) => (
+            {incompleteTasks.map((task, index) => (
               <TaskItem
                 key={task.id}
                 task={task}
+                taskNumber={index + 1}
                 onUpdate={onUpdate}
                 onDelete={onDelete}
               />
@@ -73,10 +74,11 @@ export default function TaskList({ tasks, onUpdate, onDelete, isLoading }: TaskL
             Completed Tasks ({completedTasks.length})
           </h2>
           <div className="space-y-3">
-            {completedTasks.map((task) => (
+            {completedTasks.map((task, index) => (
               <TaskItem
                 key={task.id}
                 task={task}
+                taskNumber={incompleteTasks.length + index + 1}
                 onUpdate={onUpdate}
                 onDelete={onDelete}
               />

@@ -5,11 +5,12 @@ import { Task } from '@/lib/types';
 
 interface TaskItemProps {
   task: Task;
+  taskNumber: number;
   onUpdate: (id: string, updates: { title?: string; description?: string | null; completed?: boolean }) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
 }
 
-export default function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
+export default function TaskItem({ task, taskNumber, onUpdate, onDelete }: TaskItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(task.title);
   const [editDescription, setEditDescription] = useState(task.description || '');
@@ -103,13 +104,18 @@ export default function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
   return (
     <div className={`bg-white rounded-lg shadow-sm border border-gray-200 p-4 transition-all ${task.completed ? 'opacity-60' : ''}`}>
       <div className="flex items-start gap-3">
-        <input
-          type="checkbox"
-          checked={task.completed}
-          onChange={handleToggleComplete}
-          disabled={isLoading}
-          className="mt-1 w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer disabled:cursor-not-allowed"
-        />
+        <div className="flex items-start gap-2">
+          <span className="text-sm font-semibold text-gray-400 mt-1 min-w-[2rem]">
+            #{taskNumber}
+          </span>
+          <input
+            type="checkbox"
+            checked={task.completed}
+            onChange={handleToggleComplete}
+            disabled={isLoading}
+            className="mt-1 w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer disabled:cursor-not-allowed"
+          />
+        </div>
         <div className="flex-1">
           <h3 className={`font-medium text-gray-900 ${task.completed ? 'line-through' : ''}`}>
             {task.title}

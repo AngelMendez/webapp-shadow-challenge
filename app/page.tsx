@@ -91,7 +91,7 @@ export default function Home() {
       </footer>
 
       {/* Chatbot */}
-      <Chatbot userIdentifier={userIdentifier} />
+      <Chatbot userIdentifier={userIdentifier} tasks={tasks} />
     </div>
   );
 }
