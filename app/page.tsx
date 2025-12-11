@@ -16,6 +16,7 @@ export default function Home() {
     createTask,
     updateTask,
     deleteTask,
+    refetch,
   } = useTasks(userIdentifier);
 
   if (userLoading) {
@@ -91,7 +92,7 @@ export default function Home() {
       </footer>
 
       {/* Chatbot */}
-      <Chatbot userIdentifier={userIdentifier} tasks={tasks} />
+      <Chatbot userIdentifier={userIdentifier} tasks={tasks} onTasksUpdated={refetch} />
     </div>
   );
 }

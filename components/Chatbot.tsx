@@ -13,9 +13,10 @@ interface Message {
 interface ChatbotProps {
   userIdentifier: string;
   tasks: Task[];
+  onTasksUpdated?: () => void;
 }
 
-export default function Chatbot({ userIdentifier, tasks }: ChatbotProps) {
+export default function Chatbot({ userIdentifier, tasks, onTasksUpdated }: ChatbotProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -123,6 +124,11 @@ export default function Chatbot({ userIdentifier, tasks }: ChatbotProps) {
       };
 
       setMessages((prev) => [...prev, botMessage]);
+
+      // Refresh the tasks list after successful operation
+      if (onTasksUpdated) {
+        onTasksUpdated();
+      }
     } catch (error) {
       console.error('Error sending message:', error);
 
